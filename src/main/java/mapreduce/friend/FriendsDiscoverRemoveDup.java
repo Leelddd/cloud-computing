@@ -1,4 +1,4 @@
-package mapreduce;
+package mapreduce.friend;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -13,9 +13,13 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
+/**
+ * Basic friends discover with one-degree friends removed
+ * Both Followed and Following is considered as a relation
+ * A-B B-C => recommend C to A and A to C only if A-C is not friend
+ */
 public class FriendsDiscoverRemoveDup {
 
     public static class Job1_Mapper extends Mapper<LongWritable, Text, Text, Text> {
@@ -30,15 +34,16 @@ public class FriendsDiscoverRemoveDup {
     public static class Job1_Reducer extends Reducer<Text, Text, Text, Text> {
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
-            ArrayList<String> potential_friends = new ArrayList<String>();
+            Set<String> friends = new HashSet<String>();
             for (Text v : values) {
-                potential_friends.add(v.toString());
+                friends.add(v.toString());
                 if (key.toString().compareTo(v.toString()) < 0) {
                     context.write(new Text(key + "\t" + v), new Text("1"));
                 } else {
                     context.write(new Text(v + "\t" + key), new Text("1"));
                 }
             }
+            List<String> potential_friends = new ArrayList<>(friends);
             for (int i = 0; i < potential_friends.size(); i++) {
                 for (int j = 0; j < potential_friends.size(); j++) {
                     if (potential_friends.get(i).compareTo(
@@ -94,7 +99,7 @@ public class FriendsDiscoverRemoveDup {
         }
 
 //        Job job1 = new Job(conf);
-        Job job1 = Job.getInstance(conf, "mapreduce.FriendsDiscoverRemoveDup");
+        Job job1 = Job.getInstance(conf, "mapreduce.friend.FriendsDiscoverRemoveDup");
         job1.setJarByClass(FriendsDiscoverRemoveDup.class);
         job1.setMapperClass(Job1_Mapper.class);
         job1.setReducerClass(Job1_Reducer.class);
@@ -107,7 +112,7 @@ public class FriendsDiscoverRemoveDup {
         FileOutputFormat.setOutputPath(job1, tempDir);
 
         if (job1.waitForCompletion(true)) {
-            Job job2 = Job.getInstance(conf, "mapreduce.FriendsDiscoverRemoveDup");
+            Job job2 = Job.getInstance(conf, "mapreduce.friend.FriendsDiscoverRemoveDup");
             job2.setJarByClass(FriendsDiscoverRemoveDup.class);
             FileInputFormat.addInputPath(job2, tempDir);
             job2.setMapperClass(Job2_Mapper.class);

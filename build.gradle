@@ -47,7 +47,8 @@ jar {
         configurations.runtime.collect{zipTree(it)}
     }
     manifest {
-        attributes 'Main-Class': 'mapreduce.FriendsDiscoverRemoveDup'
+//        attributes 'Main-Class': 'mapreduce.FriendsDiscoverRemoveDup'
+        attributes 'Main-Class': 'mapreduce.MutualFollowing'
 //        attributes 'Main-Class': 'mapreduce.FriendsDiscover'
     }
 }

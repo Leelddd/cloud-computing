@@ -1,4 +1,4 @@
-package mapreduce;
+package mapreduce.friend;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -15,6 +15,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Basic Friends Discover
+ * Both Followed and Following is considered as a relation
+ * A-B B-C => recommend C to A and A to C even if A-C is already friend
+ */
 public class FriendsDiscover {
     public static class Deg2FriendMapper extends Mapper<LongWritable, Text, Text, Text> {
         public void map(LongWritable key, Text value, Context context)
@@ -54,26 +59,19 @@ public class FriendsDiscover {
     }
 
     public static void main(String[] args) throws Exception {
-        try {
-            // TODO Auto-generated method stub
-            Configuration conf = new Configuration(); //对应于mapred-site.xml
-            Job job = Job.getInstance(conf, "mapreduce.FriendsDiscover");
-            job.setJarByClass(FriendsDiscover.class);
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "mapreduce.friend.FriendsDiscover");
+        job.setJarByClass(FriendsDiscover.class);
 
-            job.setMapperClass(Deg2FriendMapper.class);
-            job.setReducerClass(Deg2Reducer.class);
-            job.setOutputKeyClass(Text.class);
-            job.setOutputValueClass(Text.class);
+        job.setMapperClass(Deg2FriendMapper.class);
+        job.setReducerClass(Deg2Reducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
 
-            job.setNumReduceTasks(1);
+        job.setNumReduceTasks(1);
 
-//            FileInputFormat.addInputPath(job, new Path("hdfs://192.168.58.180:8020/MLTest/Deg2MR/Deg2MR.txt"));
-//            FileOutputFormat.setOutputPath(job, new Path("hdfs://192.168.58.180:8020/MLTest/Deg2MR/Deg2Out"));
-            FileInputFormat.addInputPath(job, new Path(args[0]));
-            FileOutputFormat.setOutputPath(job, new Path(args[1]));
-            System.exit(job.waitForCompletion(true) ? 0 : 1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
